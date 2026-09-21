@@ -1,0 +1,208 @@
+---
+title: "lab_03"
+author: "Derek Willis, adapted by Aidan Hughes"
+date: "2024-08-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Load libraries and establish settings
+
+```{r}
+# Turn off scientific notation
+options(scipen=999)
+
+# Load the tidyverse
+library(tidyverse)
+
+# Load janitor
+library(janitor)
+```
+
+### Load data
+
+```{r}
+# Load MD slice of FEC House candidate contribution data
+md_contribs <- read_rds("data/lab_03.rds")
+```
+
+### Do this first: Fix header issues
+
+You'll need to fix one issue with the column names using janitor. Write a code block to do that, making sure that you save the results to the same dataframe.
+
+```{r}
+
+cleaned_md_contribs <- md_contribs |>
+  clean_names()
+
+cleaned_md_contribs
+
+```
+
+
+### **Q1**: 
+Which seven cities in Maryland had the largest *number* of contributions from donors? Bethesda has the largest number of contributions 
+
+How many did each have? 
+They had 1,177 total contributions
+
+To answer this question, you'll have to clean the messy "contributor_city" field.
+
+Note: To answer this question, you'll need to see every variation of the "contributor_city" for the top seven cities, which you should identify through some initial analysis. Then find variations of them and change those variations into the most common version.
+
+Hint: you should be starting out with a group_by and summarize just like we did in week 1 and 2. That'll help you identify the top seven names, and then you can click through the data to find variations of those names.
+**Top 7 ORIGINAL**
+BETHESDA 1177			
+CHEVY CHASE	704			
+BALTIMORE	690			
+ANNAPOLIS	490			
+POTOMAC	490			
+SILVER SPRING	405			
+ROCKVILLE	358
+
+**GOOGLE USED TO LOOK UP IF BETHESDA AND NORTH BETHESDA WAS THE SAME -- GOOGLE SAID THEY WERE DIFFERENT -- SAME THING FOR POTOMAC AND NORTH POTOMAC -- AND ANNAPOLIS AND ANNAPOLIS JUNCTION**
+
+Then, look back at Task 15 in Pre-Lab 3 for a clue about how to update specific values. Don't forget, you'll need a step at the end to ensure that everything aside from the values you're changing stay as the default value.
+
+**A1**:
+Which seven cities in Maryland had the largest *number* of contributions from donors? Bethesda has the largest number of contributions 
+
+How many did each have? 
+They had 1,177 total contributions
+```{r}
+md_contribs |>
+select(contributor_city) |>
+ group_by(contributor_city) |>
+  summarise( 
+    count_contribs = n()
+  )|>
+  arrange(desc(count_contribs))
+
+
+cleaned_md_contribs <- md_contribs |>
+  clean_names() |> 
+    distinct() |>
+    mutate(contributor_city = str_to_title(contributor_city)) |>
+    mutate(contributor_city = case_when(
+    contributor_city == "POTAMIC" ~ "POTOMAC",
+    contributor_city == "Potamic" ~ "POTOMAC",
+    contributor_city == "ROCKWELL" ~ "ROCKVILLE",
+    contributor_city == "ROCK HALL" ~ "ROCKVILLE",
+    contributor_city == "BLATIMORE" ~ "BALTIMORE",
+    contributor_city == "BALRIMORE" ~ "BALTIMORE",
+    contributor_city == "ANAPOLIS" ~ "ANNAPOLIS",
+    contributor_city == "SILVER SPRINGS" ~ "SILVER SPRING",
+    TRUE ~ contributor_city))
+
+cleaned_md_contribs
+
+
+```
+
+### **Q2:** Find the 5-digit ZIP code in Maryland that had the highest total amount of contributions (by dollar value).
+
+Where is that zip code and what kind of area is it, demographically? 20817, This is the Bethesda zip code and Bethesda is a very rich upperclass so it makes sense that they had a high amount of total dollars contributed
+
+Which committee is the largest recipient of money from that zip code? 
+		YVETTE4CONGRESS, ADAM GRAY FOR CONGRESS	
+C00875336	BILL HAMLEN FOR CONGRESS  had the largest money that zip code at 3300
+
+How many of the top five recipients are Maryland candidates?
+Only one of them DAN COX FOR CONGRESS, INC.
+
+Hint: You will need to use mutate and str_sub to ensure that you have a zip code column with the first five characters from the existing zip code column.
+
+Other functions you'll need afterwards are filter, group by, summarise, and arrange.
+
+Break this down into individual steps and check your work along the way. That'll make this question more manageable.
+
+**A2:**
+
+```{r}
+zip_cleaned_md_contribs <- cleaned_md_contribs |>
+  distinct() |>
+  mutate(contributor_zip = str_sub(contributor_zip, start=1, end=5)) |>
+  group_by(contributor_zip) |>
+  summarise(total_amount = sum(contribution_receipt_amount)) |>
+  arrange(desc(total_amount))
+  zip_cleaned_md_contribs
+  
+  
+ largest_20817_recipient <- cleaned_md_contribs |>
+   filter(contributor_zip == "20817") 
+  head(largest_20817_recipient)
+  
+
+top_20817_committee <- largest_20817_recipient |>
+  select(committee_id, committee_name, contribution_receipt_amount, contributor_zip, contributor_city, contributor_state) |>
+  arrange(desc(contribution_receipt_amount))
+ head(top_20817_committee)
+  
+```
+
+### **Q3:**
+
+Let's look at top individual donors. 
+Write code to generate a list of top donors in each city, adding up the total amount of contributions. 
+What does the original data say about the top two donors? 
+One of the donors is from Rockville and the other one is from baltimore
+Who are they and what do they do? 
+KRACOV, DANIEL _ He is a partner and co-chair of clobal life sciences and healthcare regulatory pracitce in DC. 
+ALLEN, MARGARET - she is the CEO of AGM Financial Services
+Do you see anything in the list of top 10 donors that would make you uncertain about the accuracy of these results?
+There is a Mark and Melonie Jacobsen both from Bethesda which could be odd in the sense that they donated separately and different number of contributions. 
+
+Hint: you'll need to put two columns in a group_by to answer this question. What are the two categories you're trying to group the data by? Look back at Task 8 in Pre-lab 1 if you need a reminder of how to do this.
+
+**A3:**
+
+```{r}
+top_donors_city <- cleaned_md_contribs |> 
+  filter(contributor_city == "Baltimore") |>
+  filter(contributor_city == "Annapolis") |>
+  filter(contributor_city == "Potomac") |>
+  filter(contributor_city == "Rockville") |>
+  filter(contributor_city == "Silver Spring") |>
+  filter(contributor_city == "Chevy Chase") |>
+  filter(contributor_city == "Bethesda")|>
+  summarise(
+    count_contribs = n()
+  ) |>
+ arrange(desc(count_contribs))
+ 
+head(top_donors_city)
+
+
+
+top_donors <- cleaned_md_contribs |> 
+  group_by(contributor_name, contributor_city) |>
+  summarise(
+    count_contribs = n()
+  ) |>
+  arrange(desc(count_contribs))
+
+head(top_donors, 10)
+```
+
+
+### **BONUS QUESTION**
+
+### **Q:** What's another problem you can identify in the data? How would it impact your ability to do an accurate analysis of something? (Three bonus points)
+
+### Then, write code that would fix the issue. (Five bonus points)
+
+**A:**
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+
