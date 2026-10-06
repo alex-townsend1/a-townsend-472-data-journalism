@@ -147,6 +147,7 @@ Again, we can use a left_join to make our demographic data available. This time 
 
 ```{r}
 maryland_population_with_voters_and_demographics <- maryland_population_with_voters |> left_join(maryland_demographics, join_by(COUNTY==NAME))
+View(maryland_population_with_voters_and_demographics)
 ```
 
 Now we’ve got population data and demographic data by county. That means we can draw from both datasets in asking our questions. For example, we could see the counties with the highest 18+ Black population as a percentage of all population 18 and over and also the percentage of Democrats in that county.
