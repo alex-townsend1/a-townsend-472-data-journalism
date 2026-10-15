@@ -1,6 +1,6 @@
 ---
 title: "Reverse Engineering Project"
-author: "Student names here"
+author: "Alex Townsend and Jake Ballard"
 date: "Date here"
 output:
   html_document:
@@ -18,14 +18,20 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction 
 
-In this notebook, we are reverse engineering the story, [STORY NAME](STORY URL)
+In this notebook, we are reverse engineering the story, [CEOs gave heavily during legislative session, exposing loophole in NC's fundraising ban](https://www.wral.com/archive/17716104/)
 
 ## Load libraries
 
 Loading required libraries for this analysis.
 
 ```{r echo=FALSE, message=FALSE}
-
+install.packages('refinr')
+options(scipen=999)
+library(dplyr)
+library(tidyverse)
+library(lubridate)
+library(refinr)
+library(janitor)
 ```
 
 ## Load and Cleaning Data
@@ -33,27 +39,41 @@ Loading required libraries for this analysis.
 In this section, describe the source of the data, write a basic data dictionary for data you are working with, and discuss any caveats or issues you discovered working with this data. 
 
 ```{r}
-# Load required data
+donors_nc <- read_csv("data/donors_nc.csv")
 
-# Path to data should be loaded from folder "data" i.e. read_csv("data/name_of_data.csv")
-
-# Clean required data and prepare for analysis if needed. 
-
-
+cleaned_donors_nc <- donors_nc |>
+  clean_names() |>
+  mutate(
+    city = str_to_title(city),
+    profession = str_to_title(profession),
+    street_line1 = str_to_title(street_line1),
+    street_line2 = str_to_title(street_line2),
+    employer_name = str_to_title(employer_name),
+    zip = str_sub(zip, 1, 5),
+    date = mdy(date),
+    amount = parse_number(amount)
+  )
+cleaned_donors_nc
 ```
 
 ## Sentences to Engineer
 In this notebook, we are reverse engineering five sentences from the story.
-
+I cleaned the data column and output of the date, zip code, and city name. 
 ### Sentence 1
 
-* **Sentence text**: [Paste in sentence to engineer here]
-* **Analysis summary**: [Write up two to three sentences describing the results of your analysis.  Were you able to confirm the finding? If not, why not?]
+* **Sentence text**: 
+R.H. Barringer's board chair, Jasie Barringer, donated another $8,200 in-session, and Teresa Craig kicked in another $5,200 to Berger. The North Carolina Beer & Wine Wholesalers Association PAC gave $18,400 during the week before session and on opening day."
+
+* **Analysis summary**: [Write up two to three sentences describing the results of your analysis.  Were you able to confirm the finding? If not, why not?] 
+
+We were able to confirm the finding by looking at the date. The first donation I found was the was Teresa's donation of 5,200 which was on 5/18/18, by sorting by the date we can find the donations leading up to that date. Low and behold, Teresa's was there as previously mentioned, Barringer donated 5,200 that date as well as three 1,000 donations after (combining to 8,200), and when you look at the donations in the week leading up to it by the association, it adds up to 18,400 perfectly. 
+
 
 ```{r}
-# Put code to reverse engineer sentence here
-
-# Display results of code below this codeblock
+sentence_one <- cleaned_donors_nc |>
+  filter(name_clean == "TERESA S CRAIG" | name_clean == "JASIE S BARRINGER" | name_clean == "NC BEER & WINE WHOLESALERS ASSOC PAC")
+sentence_one |>
+  group_by(date)
 
 ```
 
