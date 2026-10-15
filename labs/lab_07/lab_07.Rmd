@@ -36,7 +36,7 @@ You'll need your Census API Key:
 
 In the console (in the bottom left of the R Studio window), paste the following code and replace "YOUR API KEY" with your API key. (But keep the quotation marks around the key!):
 
-census_api_key("df56fe4aaee8151609e2e36b1461f4d15ea556ac", overwrite=TRUE) - Delete Later 
+census_api_key("", overwrite=TRUE) - Delete Later 
 
 
 ## Load and view ACS variables
