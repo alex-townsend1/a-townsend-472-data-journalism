@@ -79,13 +79,17 @@ sentence_one |>
 
 ### Sentence 2
 
-* **Sentence text**: [Paste in sentence to engineer here]
+* **Sentence text**: Scott Prestage, with Prestage Farms, gave Moore's campaign $5,200 right at the end of session, after the General Assembly passed legislation meant to make lawsuits against hog farms harder to win. Going back to the beginning of the year, people connected to Prestage Farms gave Moore $31,000 in campaign donations. Half are dated two-and-a-half months before the session began. The rest came in the session's closing days or the day after the session ended.
+
 * **Analysis summary**: [Write up two to three sentences describing the results of your analysis.  Were you able to confirm the finding? If not, why not?]
+Scott Prestage would end up donating $5,200 twice to Friends of Time Moore, on 3/1/18 and again on 6/28/18. People associated with Prestage Farms would donate around $31,000 to the Friends of Tim Moore. 
+
 
 ```{r}
-# Put code to reverse engineer sentence here
-
-# Display results of code below this codeblock
+sentence_two <- cleaned_donors_nc |>
+  filter(name_clean == "TERESA S CRAIG" | name_clean == "JASIE S BARRINGER" | name_clean == "NC BEER & WINE WHOLESALERS ASSOC PAC")
+sentence_one |>
+  group_by(date)
 
 ```
 
