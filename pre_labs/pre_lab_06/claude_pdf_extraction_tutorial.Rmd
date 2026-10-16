@@ -96,7 +96,7 @@ you. In the RStudio **Console** (bottom-left pane), run:
 ```{r edit-renviron, eval=FALSE}
 # install.packages("usethis")  # skip if you already have it
 usethis::edit_r_environ()
-ANTHROPIC_API_KEY="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"
+ANTHROPIC_API_KEY=""
 ```
 
 
@@ -108,7 +108,7 @@ In the editor tab that just opened, add one line (replace the placeholder
 with your actual key from the [Anthropic Console](https://console.anthropic.com/)):
 
 ```
-ANTHROPIC_API_KEY="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" - delete later
+ANTHROPIC_API_KEY="" - delete later
 ```
 
 A few things that trip people up here:
