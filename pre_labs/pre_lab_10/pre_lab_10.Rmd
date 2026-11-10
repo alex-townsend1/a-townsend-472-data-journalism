@@ -59,6 +59,8 @@ Simlar to `readr`, the `sf` library has functions to read geographic data. In th
 ### Task: Load data
 
 **Task** Run the following code to load data. Describe what you see in the answer space below. What columns exist in this data? **Answer**
+It loads in a data set of election precinct data from 2022
+
 
 ```{r}
 pg_precincts <- st_read("data/Election_Precinct_2022_Py.gdb")
@@ -73,6 +75,7 @@ Let's look at these precincts. We have 356 of them, according to this data.
 ### Task: Run code
 
 **Task** Run the following code. Describe the output in the space below: what kind of information does it contain? **Answer**
+Its showing polling districts/zones and their precincts with data on the actual area and length (perimeter) of the polling districts. It is geographic data that doesn't look like geographic data yet
 
 ```{r}
 View(pg_precincts)
@@ -83,6 +86,7 @@ But where in Prince George's County are these places? We can simply plot them on
 ### Task: Run code
 
 **Task** Run the following code. Describe the output in the space below. **Answer**
+This draws up an acutal map of PG county and gives us some metrics to relate to the shape area, and length
 
 ```{r}
 pg_precincts |>
@@ -106,6 +110,7 @@ Then load it:
 ### Task: Run code
 
 **Task** Run the following code. Describe the output in the space below. **Answer**
+Pulling data from the census as well
 
 ```{r}
 # install.packages('tigris')
@@ -117,6 +122,7 @@ Now, let's use the counties() function from tigris to pull down a shapefile of a
 ### Task: Run code
 
 **Task** Run the following code. Describe the output in the space below. **Answer**
+It loads in a data set of information about every county in the united states 
 
 ```{r}
 
@@ -132,6 +138,7 @@ This county shapefile has all 3233 U.S. counties. We only want the Maryland coun
 ### Task: Run code
 
 **Task** Run the following code. Describe the output in the space below. **Answer**
+This focuses the counties for Maryland because 24 is maryland - so before it was all us counties this specifies it to maryland
 
 ```{r}
 md_counties <- counties |>
@@ -144,7 +151,7 @@ To see what this looks like, let's plot it out with ggplot. We can pretty clearl
 ### Task: Run code
 
 **Task** Run the following code. Describe the output in the space below. **Answer**
-
+it shows the whole state of maryland not just Prince Georges county map
 ```{r}
 md_counties |>
   ggplot() +
@@ -161,6 +168,7 @@ We're also going to change things up a bit to put the datasets we want to displa
 ### Task: Run code
 
 **Task** Run the following code. Describe the output in the space below. **Answer**
+Shows pg county specifically and the breakup/size (geographically speaking) of each precinct in PG county
 
 ```{r}
 ggplot() +
@@ -176,7 +184,7 @@ Let's dive back into Prince George's precincts and see what more we can find out
 ### Task: Run code to load the turnout data from the May 2024 Primary election
 
 **Task** Run the following code. Describe the output in the space below. **Answer**
-
+This shows us each precinct and the turnout from different types of voting like early/absentee/provisional out of total eligible
 ```{r}
 primary_24 <- read_csv("data/Official by Party and Precinct.csv") |> clean_names()
 pg_turnout <- primary_24 |> 
@@ -202,7 +210,7 @@ Now we can use color to distinguish precincts from each other. Let's use the tot
 ### Task: Run code
 
 **Task** Run the following code. Describe the output in the space below. **Answer**
-
+This colors the PG county map with the data - the more eligible voters the lighter the blue and the less eligible voters the darker it is on the map
 ```{r}
 ggplot() +
   geom_sf(data=pg_precincts_with_turnout, aes(fill=total_eligible)) +
@@ -234,7 +242,7 @@ We've got voters by county, so let's load that from the data folder and take a l
 ### Task: Run code
 
 **Task** Run the following code. Describe the output in the space below. **Answer**
-
+Shows in each county how many dems/reps/other are in those county 
 ```{r}
 voters_by_county <- read_csv("data/eligible_voters.csv")
 
