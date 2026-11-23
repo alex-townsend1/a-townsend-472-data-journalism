@@ -86,14 +86,14 @@ Yes we were able to confirm the findings, people associated with Prestage Farms 
 
 
 ```{r}
-donations_prestage <- cleaned_donors_nc |>
+sentence_two <- cleaned_donors_nc |>
   filter(name_clean == "JOHN L PRESTAGE" | name_clean == "SCOTT J PRESTAGE" | name_clean == "W H PRESTAGE") |>
   filter(date >= "2018-03-01" & date <= "2018-06-30")
 
-donations_prestage |>
+sentence_two |>
   select(name_clean, amount, date, committee_name) |>
   arrange(date)
-donations_prestage |>
+sentence_two |>
   group_by(name_clean, committee_name) |>
   summarise(total_donated = sum(amount))
 ```
@@ -104,41 +104,59 @@ donations_prestage |>
 “This year's legislative session also saw significant donations from hog farmers and beer distributors, both industries with important legislation before the General Assembly. Senate President Pro Tem Phil Berger's campaign alone raised nearly $222,000 during session. Twenty-three people gave him the maximum allowed: $5,200.”
 
 * **Analysis summary**: [Write up two to three sentences describing the results of your analysis.  Were you able to confirm the finding? If not, why not?]
-What I did was take the data and only keep the donations that came from the session which was May 16 to June 29, according to the GitHub. The reason for this was because the data is sorted in order by the date going from earliest to latest. I then took the total amount of money in that time period directed toward Rabon's committee and took it out of the total amount of money in that time period to give the percetange after it was multiplied by 100. The number that I got was 0.74% which is far off from the number. To me what that means is that money that went toward Rabon is under a different name in the dataset. For instance there are several directed toward North Carolina committees which is the state that Rabon is a Senator for. 
+I filtered to keep the dates of the contributions only during session then I filtered so that the committee name was to Berger. After I summed the total amount of contributions which was more than the original $222,000 that was claimed he nearly met. Then I filtered to see how many contributions there were at the max amount 5,200 and found that there were 28 times that we was given the max contributions. 
 
 
 ```{r}
-# Put code to reverse engineer sentence here (I used Google to find out how to sort from specific row numbers and to specify the sum from a specific column as I could not find it in my notes)
-sentence_three <- cleaned_donors_nc |> slice(14133:17097)
-rabon_total <- sentence_three |>
-  filter(committee_name == "RABON FOR SENATE")
-sum(rabon_totalamount)/sum(sentencetwoamount) * 100
+sentence_three <- cleaned_donors_nc |>
+  filter(date >= "2018-05-16", 
+         date <= "2018-06-30",
+         str_detect(committee_name, "BERGER"))
 
+sum(sentence_three$amount)                                        
+
+sentence_three |> 
+  filter(amount == 5200) |> 
+  distinct(name_clean) |> 
+  nrow()  
 
 ```
 
 ### Sentence 4
 
 * **Sentence text**: [Paste in sentence to engineer here]
+“More than a third of the PAC money logged during session went to Rabon's campaign.”
+Came from taking a look at the data and calculating the data that fills the criteria out of number of individual pieces of data or rows. It is important because it is crucial to the story to see where Rabon’s support comes from. 
+
 * **Analysis summary**: [Write up two to three sentences describing the results of your analysis.  Were you able to confirm the finding? If not, why not?]
+After writing up the code and puting in time frame filters for when the pac money was logged , then filtering who the pac money was sent to. It shows that the claim was right, around 33 percent of the PAC money logged during the session did go to Rabons campaign.
 
 ```{r}
 # Put code to reverse engineer sentence here
-
-# Display results of code below this codeblock
+sentence_four <- cleaned_donors_nc |> slice(14133:17097)
+sentence_four <- sentence_four |>
+  filter(str_detect(name_clean, "PAC")) |>
+  filter(source == "candidates")
+rabon_total <-  sentence_four |>
+  filter(committee_name == "RABON FOR SENATE")
+#I subtracted 250 here because there was one contribution that was sorted into the group from someone with the last name Pace. 
+sum(rabon_total$amount) /(sum(sentence_four$amount) - 250) * 100
 
 ```
 
 ### Sentence 5
 
 * **Sentence text**: [Paste in sentence to engineer here]
+"There was a major bump during the first week of session this year for the state parties, but that's because three large donors – LinkedIn co-founder Reid Hoffman, Durham investor Greg Lindberg and Lindberg's Eli Research company – donated $1.3 million that week to the state Republican and Democrat parties."
 * **Analysis summary**: [Write up two to three sentences describing the results of your analysis.  Were you able to confirm the finding? If not, why not?]
+First I sorted just from the dates of the first week of session by doing the same thing we did in the third sentence but this time taking it from the days of May 16 to May 22 as that is the first seven days of session. I then sorted from that time period for just donations form the three groups listed above. From that I just added all the amounts of the donations together which yielded an answer of $1.25 million. Although it's not exact, I still feel we can confirm this finding because rounded up does equals 1.3 million. 
+
 
 ```{r}
-# Put code to reverse engineer sentence here
-
-# Display results of code below this codeblock
-
+sentence_five <- cleaned_donors_nc |> 
+  slice(14133:14630) |>
+  filter(name_clean == "REID GARRETT HOFFMAN" | name_clean == "GREG LINDBERG" | name_clean == "ELI RESEARCH LLC")
+sum(sentence_five$amount)
 ```
 
 -30-
