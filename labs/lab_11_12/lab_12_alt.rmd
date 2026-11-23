@@ -18,7 +18,12 @@ knitr::opts_chunk$set(echo = TRUE)
 **Task** Create a codeblock and load appropriate packages and settings for this lab.
 
 ```{r}
-
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(rvest)
+library(tidytext)
+library(textstem)
 ```
 
 This lab combines the two skills we've picked up in the last two pre-labs: scraping a page with `rvest` (pre_lab_11) and analyzing a body of text with `tidytext` (pre_lab_12). Instead of starting from a CSV, you're going to scrape your own two bodies of text to compare -- the same idea as the Republican/Democratic platform comparison in pre_lab_12, but now you're collecting the text yourself.
@@ -40,10 +45,8 @@ Both offices' websites are built on the same template that a lot of House member
 ```{r}
 pres_url <- "https://scalise.house.gov/media/press-releases"
 
-
 scalise_page <- pres_url |>
   read_html()
-
 
 scalise_page
 ```
@@ -55,89 +58,203 @@ In pre_lab_11 we grabbed elements using only tag names, like `html_elements("li 
 Use `html_elements(".h3 a")` to find every `<a>` inside an element with the class `h3` -- one headline per release. Add `head(10)` to keep just the 10 most recent. Store that in the variable `scalise_titles`.
 
 ```{r}
-scalise_page <- pres_url |>
-  read_html() |>
-  html_table()
+scalise_titles <- scalise_page |>
+  html_elements(".h3 a") |>
+  head(10)
 
-# Just keep the first dataframe in our list
-
-scalise_page <- results[[1]]
-
-# show the dataframe
-
-scalise_page
-
+scalise_titles
 ```
 
 **Q1c.** Then, find the text of each release. Look a little further down in the inspector: the text is in one or more `<p>` tags, all wrapped inside a `<div>` with `class="evo-press-release__body"`. Use `html_elements(".evo-press-release__body")` to find every element with that class -- one body per release, with all of its paragraphs together. Add `head(10)` again and store it in the variable `scalise_bodies`.
 
 ```{r}
- clean_names() |>
-  rename(harris = 2, trump = 3, oliver = 4, stein = 5, kennedy = 6) |>
-  slice(-25) |>
-  #update column harris, use gsub to swap out any commas in teh values (",") with NOTHING in the comma's place (",") from the values in Harris, Then turn those values into actual numbers instead of characters
-  mutate(harris = as.numeric(gsub(",","", harris))) |>
-  mutate(trump = as.numeric(gsub(",","", trump))) |>
-  mutate(oliver = as.numeric(gsub(",","", oliver))) |> 
-  mutate(stein = as.numeric(gsub(",","", stein))) |> 
-  mutate(kennedy = as.numeric(gsub(",","", kennedy))) |> 
-  select(-sharon_e_harris_write_in_democratic)
+scalise_bodies <- scalise_page |>
+  html_elements(".evo-press-release__body") |>
+  head(10)
 
-# show the dataframe
-results
+scalise_bodies
 ```
 
 **Q1d.** Finally, use `tibble()` to turn this information into a dataset called `scalise`, the same way pre_lab_11 built `committees_with_urls`. You should have one column called `title` with the press release title, one column called `body` with the press release text, and another column called `leader` that indicates who the press release is from ("Scalise (R)"). Use `html_text(trim = TRUE)` on `scalise_titles` and `scalise_bodies` to get the text out. You should end up with 10 rows.
 
 ```{r}
+scalise <- tibble(
+  title = scalise_titles |> html_text(trim = TRUE),
+  body = scalise_bodies |> html_text(trim = TRUE),
+  leader = "Scalise (R)"
+)
 
+scalise
 ```
 
 **Q1e.** Now do the same for Jeffries. Both sites are built on the same template, so you can copy your code from Q1a through Q1d, change the URL, and change "scalise" to "jeffries" in the variable names. Set the `leader` column to "Jeffries (D)" and store the result as `jeffries`.
 
 ```{r}
+jeffries_url <- "https://democraticleader.house.gov/media/press-releases"
+
+jeffries_page <- jeffries_url |>
+  read_html()
+
+jeffries_titles <- jeffries_page |>
+  html_elements(".h3 a") |>
+  head(10)
+
+jeffries_bodies <- jeffries_page |>
+  html_elements(".evo-press-release__body") |>
+  head(10)
+
+jeffries <- tibble(
+  title = jeffries_titles |> html_text(trim = TRUE),
+  body = jeffries_bodies |> html_text(trim = TRUE),
+  leader = "Jeffries (D)"
+)
+
+jeffries
 
 ```
 
 **Q1f.** Combine `scalise` and `jeffries` into a single dataframe called `releases` using `bind_rows()`, the same way you did in lab_11.
 
 ```{r}
+releases <- bind_rows(scalise, jeffries)
 
+releases
 ```
 
 **Q1g.** Now, following the example in the pre_lab, make a list of unique words from the `body` column of `releases` and remove the standard tidytext stop words. Look at what's left over -- you should notice a handful of words that aren't in the stop words list but show up constantly anyway, not because they're meaningful content. Add those as custom stop words, the same way the pre_lab added "united" and "america" for the party platforms. Finally, produce a top 10 list of words (combining both leaders) with their percentages. What's the leading word, and what does it tell you -- or not tell you -- about the differences between the two leaders?
-
+The top word is house followed by leader, and it shows that thier main priority for them both is to ensure that their respective party has majority in the house. 
 **A1.**
 
 ```{r}
+unique_words <- releases |>
+  select(leader, body) |>
+  unnest_tokens(word, body) |>
+  anti_join(stop_words, by = "word")
 
+
+unique_words |>
+  count(word, sort = TRUE) |>
+  head(30)
+
+
+custom_stop_words <- tibble(word = c("https", "http", "www", "com", "gov", "html", "pdf", "said", "says", "will", "can", "also", "just", "like",
+  "read", "share", "the", "a", "an","r"))
+
+unique_words <- unique_words |>
+  anti_join(custom_stop_words, by = "word")
+
+
+unique_words |>
+  count(word, sort = TRUE) |>
+  mutate(percent = n / sum(n) * 100) |>
+  head(10)
 ```
 
 
 ### STOP! NO AI USE PAST THIS POINT
 
 **Q2.** Now split your unique-words dataframe into two dataframes, one per leader, the same way pre_lab_12 split the platforms into `unique_words_rep` and `unique_words_dem`. Produce a top 10 list of words for each leader. What do the two lists suggest about how each party is using its leader's press releases? Before you answer, look at the dates on each website -- do the two sets of 10 releases cover the same stretch of time? How might that affect your comparison?
-
+It shows which words are used more, for the republicans they are talking about majority for the house in congress in DC since DC was mentioned a considerable amount of times. As for the democrats, the words today and Americans were used a lot to suggest that they are trying to talk more about todays democratic party and maybe what they are focused on issues wise affecting americans today rather than what appears to be the republicans focusing more on keeping majority in the house in DC. 
 **A2.**
 
 ```{r}
+unique_words_rep <- releases |>
+  filter(leader == "Scalise (R)") |>
+  select(body) |>
+  unnest_tokens(word, body)
 
+unique_words_dem <- releases |>
+  filter(leader == "Jeffries (D)") |>
+  select(body) |>
+  unnest_tokens(word, body)
+
+unique_words_rep |>
+  anti_join(stop_words) |>
+  anti_join(custom_stop_words) |>
+  group_by(word) |>
+  summarize(n = n()) |>
+  arrange(desc(n)) |>
+  mutate(percent = (n/sum(n))*100) |>
+  head(10)
+
+unique_words_dem |>
+  anti_join(stop_words) |>
+  anti_join(custom_stop_words) |>
+  group_by(word) |>
+  summarize(n = n()) |>
+  arrange(desc(n)) |>
+  mutate(percent = (n/sum(n))*100) |>
+  head(10)
 ```
 
 **Q3.** Make a list of the top 10 bigrams for each leader separately, following the same `separate()`/`anti_join()` approach from pre_lab_12. What's the top bigram for each leader, and what does the overall shape of each list tell you about how each office writes its releases?
-
+hakeem	jeffries (D), and house majoirty (R). The majority of the word bigrams that are used in teh top ten for both party leaders are the leader names, and hakeem jeffries and steve scalise, if it isnt' their name that is used the most it is something related to the house/house majority/leadership in DC/the legislative branch
 **A3.**
 
 ```{r}
+releases |>
+  filter(leader == "Scalise (R)") |>
+  select(body) |>
+  unnest_tokens(bigram, body, token = "ngrams", n = 2) |>
+  separate(bigram, c("word1", "word2"), sep = " ") |>
+  filter(!word1 %in% stop_words$word) |>
+  filter(!word2 %in% stop_words$word) |>
+  filter(!word1 %in% custom_stop_words$word) |>
+  filter(!word2 %in% custom_stop_words$word) |>
+  count(word1, word2, sort = TRUE) |>
+  mutate(percent = (n/sum(n))*100) |>
+  head(10)
 
+
+releases |>
+  filter(leader == "Jeffries (D)") |>
+  select(body) |>
+  unnest_tokens(bigram, body, token = "ngrams", n = 2) |>
+  separate(bigram, c("word1", "word2"), sep = " ") |>
+  filter(!word1 %in% stop_words$word) |>
+  filter(!word2 %in% stop_words$word) |>
+  filter(!word1 %in% custom_stop_words$word) |>
+  filter(!word2 %in% custom_stop_words$word) |>
+  count(word1, word2, sort = TRUE) |>
+  mutate(percent = (n/sum(n))*100) |>
+  head(10)
 ```
 
 **Q4.** Using Jeffries' unique-words dataframe from Q2, compare the top 10 words you get from the original words, the stemmed words, and the lemmatized words (the same three-way comparison pre_lab_12 walked through for the party platforms). What differences do you notice?
-
+The stemmed words one has house as hous without the e, and other words too that have the whole word basically but the if the last letter is an e its cut off. Not just house, but also people, and jeffrie both dont have the last e included in the stemmed words. 
 **A4.**
 
 ```{r}
+unique_words_dem |>
+  anti_join(stop_words) |>
+  anti_join(custom_stop_words) |>
+  group_by(word) |>
+  summarize(n = n()) |>
+  arrange(desc(n)) |>
+  mutate(percent = (n/sum(n))*100) |>
+  head(10)
 
+
+unique_words_dem |>
+  anti_join(stop_words) |>
+  anti_join(custom_stop_words) |>
+  mutate(word = stem_words(word)) |>
+  group_by(word) |>
+  summarize(n = n()) |>
+  arrange(desc(n)) |>
+  mutate(percent = (n/sum(n))*100) |>
+  head(10)
+
+
+unique_words_dem |>
+  anti_join(stop_words) |>
+  anti_join(custom_stop_words) |>
+  mutate(word = lemmatize_words(word)) |>
+  group_by(word) |>
+  summarize(n = n()) |>
+  arrange(desc(n)) |>
+  mutate(percent = (n/sum(n))*100) |>
+  head(10)
 ```
 
 **BONUS** Finally, run a sentiment analysis on each leader's unique-words dataframe separately using the "bing" lexicon, the same way pre_lab_12 did for the party platforms. How does the positive/negative balance compare between the two leaders, and is there anything that looks miscategorized in either list?
